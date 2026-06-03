@@ -50,6 +50,31 @@ export interface Draft {
   saved_at: string
 }
 
+// Tier 1: 원시 피드백 (episodic log)
+export interface Feedback {
+  id: string
+  signal: string       // "문장이 너무 끊어짐"
+  correction: string   // "자연스럽게 이어지는 구어체"
+  context: {
+    format?: string    // "post" | "thread"
+    axis?: string      // "authenticity" | "authority" | "growth"
+    tags?: string[]
+  }
+  created_at: string
+  apply_count: number  // 컨텍스트에 포함된 횟수
+  promoted: boolean    // brand_dna로 승급됐는지
+}
+
+// Tier 2: distill된 규칙 (N개 피드백 → 1개 규칙)
+export interface FeedbackRule {
+  id: string
+  rule: string         // "문장 연결체 선호. 한 줄 끊기 회피."
+  source_ids: string[] // 이 규칙을 만든 피드백 ID들
+  apply_count: number
+  created_at: string
+  promoted: boolean
+}
+
 export interface EngagementStats {
   total: number
   totalLikes: number
@@ -125,4 +150,9 @@ export interface ThreadsStore {
   collectPosts(): Promise<CollectResult>
   exportToWiki(opts: { force: boolean }): Promise<{ created: number; updated: number; skipped: number }>
   getDraftContext(opts: { days: number; limit: number }): Promise<string>
+
+  // 피드백 메모리 (write-manage-read 루프)
+  saveFeedback(input: { signal: string; correction: string; context?: Feedback['context'] }): Promise<Feedback>
+  getFeedbackRules(): Promise<{ feedbacks: Feedback[]; rules: FeedbackRule[] }>
+  promoteFeedback(ruleId: string): Promise<{ rule: FeedbackRule; brandDnaUpdated: boolean }>
 }

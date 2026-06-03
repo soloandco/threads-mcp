@@ -132,6 +132,37 @@ export const TOOL_LIST = [
       },
     },
   },
+  {
+    name: 'save_feedback',
+    description: '초안 수정 피드백을 저장. 다음 get_draft_context 호출 시 [학습된 피드백] 섹션에 자동 포함됨.',
+    inputSchema: {
+      type: 'object',
+      required: ['signal', 'correction'],
+      properties: {
+        signal:     { type: 'string', description: '문제점 (예: "문장이 너무 끊어짐")' },
+        correction: { type: 'string', description: '개선 방향 (예: "자연스럽게 이어지는 구어체")' },
+        format:     { type: 'string', description: '글 포맷 (예: "post", "thread")', default: 'post' },
+        axis:       { type: 'string', enum: ['authenticity', 'authority', 'growth'], description: '콘텐츠 축' },
+        tags:       { type: 'array', items: { type: 'string' }, description: '자유 태그' },
+      },
+    },
+  },
+  {
+    name: 'get_feedback_rules',
+    description: '저장된 피드백과 distill된 규칙 목록 조회. 승급 대상 규칙을 확인할 때 사용.',
+    inputSchema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'promote_feedback',
+    description: '규칙을 brand_dna.writing_style에 영구 등록. 반드시 사용자 확인 후 호출할 것.',
+    inputSchema: {
+      type: 'object',
+      required: ['rule_id'],
+      properties: {
+        rule_id: { type: 'string', description: 'get_feedback_rules에서 확인한 규칙 ID' },
+      },
+    },
+  },
 ]
 
 function text(content: string) {
@@ -288,6 +319,40 @@ export async function dispatch(
       case 'export_to_wiki': {
         const result = await store.exportToWiki({ force: Boolean(a.force ?? false) })
         return text(`wiki 내보내기 완료\n신규: ${result.created}개 / 갱신: ${result.updated}개 / 건너뜀: ${result.skipped}개`)
+      }
+      case 'save_feedback': {
+        const fb = await store.saveFeedback({
+          signal: String(a.signal ?? '').slice(0, 300),
+          correction: String(a.correction ?? '').slice(0, 300),
+          context: {
+            format: a.format ? String(a.format) : undefined,
+            axis: a.axis ? String(a.axis) : undefined,
+            tags: Array.isArray(a.tags) ? (a.tags as unknown[]).map(String).slice(0, 10) : undefined,
+          },
+        })
+        return text(`피드백 저장 완료 (ID: ${fb.id})\n문제: ${fb.signal}\n개선: ${fb.correction}\n→ 다음 get_draft_context에 자동 반영됩니다.`)
+      }
+      case 'get_feedback_rules': {
+        const { feedbacks, rules } = await store.getFeedbackRules()
+        const lines: string[] = ['=== 피드백 메모리 현황 ===', '']
+        if (rules.length) {
+          lines.push(`[Tier 2 규칙 — distill됨 (${rules.length}개)]`)
+          rules.forEach((r, i) => lines.push(`${i + 1}. [ID: ${r.id}] (적용 ${r.apply_count}회)\n   ${r.rule}`))
+          lines.push('')
+        }
+        if (feedbacks.length) {
+          lines.push(`[Tier 1 원시 피드백 (${feedbacks.length}개)]`)
+          feedbacks.forEach((f, i) => lines.push(`${i + 1}. [ID: ${f.id}] (적용 ${f.apply_count}회)\n   문제: ${f.signal}\n   개선: ${f.correction}`))
+        }
+        if (!feedbacks.length && !rules.length) lines.push('저장된 피드백 없음')
+        lines.push('', '→ 규칙을 brand_dna에 영구 등록하려면 promote_feedback(rule_id) 호출')
+        return text(lines.join('\n'))
+      }
+      case 'promote_feedback': {
+        const ruleId = String(a.rule_id ?? '')
+        if (!ruleId) return text('rule_id가 필요합니다. get_feedback_rules로 ID를 확인하세요.')
+        const { rule } = await store.promoteFeedback(ruleId)
+        return text(`승급 완료\n규칙: ${rule.rule}\n→ brand_dna.writing_style에 영구 등록됐습니다.\n→ 다음 get_draft_context부터 [글쓰기 금기]에 포함됩니다.`)
       }
       default:
         return text(`알 수 없는 도구: ${name}`)

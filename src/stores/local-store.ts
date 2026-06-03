@@ -5,6 +5,7 @@ import type {
   ThreadsStore, Post, Reply, BrandDna, Draft,
   EngagementStats, KeywordFreq, TrendingResult,
   ReplyActivity, UserSummary, CollectResult,
+  Feedback, FeedbackRule,
 } from './store'
 import { PaidOnlyError } from './store'
 import { ThreadsApiClient, normalizePost, normalizeReply } from '../threads/client'
@@ -34,6 +35,8 @@ export class LocalStore implements ThreadsStore {
   private readonly baseDir: string
   private readonly postsPath: string
   private readonly repliesPath: string
+  private readonly feedbackPath: string
+  private readonly rulesPath: string
   private readonly wikiDir: string
   private readonly draftsDir: string
   private readonly token: string
@@ -45,6 +48,8 @@ export class LocalStore implements ThreadsStore {
     this.baseDir = path.dirname(configPath)
     this.postsPath = path.join(this.baseDir, 'raw', 'posts.json')
     this.repliesPath = path.join(this.baseDir, 'raw', 'replies.json')
+    this.feedbackPath = path.join(this.baseDir, 'raw', 'feedback.json')
+    this.rulesPath = path.join(this.baseDir, 'raw', 'feedback-rules.json')
     this.wikiDir = path.join(this.baseDir, 'wiki')
     this.draftsDir = path.join(this.baseDir, 'wiki', 'drafts')
 
@@ -368,6 +373,9 @@ export class LocalStore implements ThreadsStore {
       .map((p, i) => `--- ${i + 1}위 (좋아요 ${p.like_count} · 댓글 ${p.reply_count} · 점수 ${p._score}) [${p.posted_at.slice(0, 10)}] ---\n${p.text}`)
       .join('\n\n')
 
+    // 학습된 피드백 주입 (apply_count 높은 상위 5개)
+    const learnedLines = this._getTopFeedbackLines(5)
+
     return [
       '=== 글쓰기 컨텍스트 ===',
       '',
@@ -383,6 +391,12 @@ export class LocalStore implements ThreadsStore {
       '[글쓰기 금기]',
       style?.avoids?.join(', ') || '없음',
       '',
+      ...(learnedLines.length ? [
+        '[학습된 피드백 — 이전 초안 수정 이력]',
+        '→ 아래 규칙을 반드시 반영하세요.',
+        ...learnedLines,
+        '',
+      ] : []),
       '[성공 패턴]',
       patterns.length ? patterns.join(', ') : '데이터 부족 (3개 미만)',
       '',
@@ -391,6 +405,131 @@ export class LocalStore implements ThreadsStore {
       '',
       topPostsText || '성공글 없음',
     ].join('\n')
+  }
+
+  // ─── 피드백 메모리 (write-manage-read 루프) ──────────────────
+
+  private readFeedbacks(): Feedback[] {
+    try { return JSON.parse(fs.readFileSync(this.feedbackPath, 'utf-8')) as Feedback[] }
+    catch { return [] }
+  }
+
+  private writeFeedbacks(items: Feedback[]): void {
+    fs.mkdirSync(path.dirname(this.feedbackPath), { recursive: true })
+    fs.writeFileSync(this.feedbackPath, JSON.stringify(items, null, 2), 'utf-8')
+  }
+
+  private readRules(): FeedbackRule[] {
+    try { return JSON.parse(fs.readFileSync(this.rulesPath, 'utf-8')) as FeedbackRule[] }
+    catch { return [] }
+  }
+
+  private writeRules(rules: FeedbackRule[]): void {
+    fs.mkdirSync(path.dirname(this.rulesPath), { recursive: true })
+    fs.writeFileSync(this.rulesPath, JSON.stringify(rules, null, 2), 'utf-8')
+  }
+
+  // getDraftContext 내부 주입용 — 상위 N개 피드백/규칙 요약 라인
+  private _getTopFeedbackLines(limit: number): string[] {
+    const rules = this.readRules().filter(r => !r.promoted).sort((a, b) => b.apply_count - a.apply_count)
+    const feedbacks = this.readFeedbacks().filter(f => !f.promoted).sort((a, b) => b.apply_count - a.apply_count)
+
+    const lines: string[] = []
+    for (const r of rules.slice(0, limit)) {
+      lines.push(`- ${r.rule} (적용 ${r.apply_count}회)`)
+    }
+    // 규칙이 부족하면 원시 피드백으로 채움
+    const remaining = limit - lines.length
+    for (const f of feedbacks.slice(0, remaining)) {
+      lines.push(`- ${f.correction} (적용 ${f.apply_count}회)`)
+    }
+
+    // apply_count 증가 (read = use)
+    const usedFIds = new Set(feedbacks.slice(0, remaining).map(f => f.id))
+    const usedRIds = new Set(rules.slice(0, limit).map(r => r.id))
+    if (usedFIds.size > 0) {
+      this.writeFeedbacks(this.readFeedbacks().map(f => usedFIds.has(f.id) ? { ...f, apply_count: f.apply_count + 1 } : f))
+    }
+    if (usedRIds.size > 0) {
+      this.writeRules(this.readRules().map(r => usedRIds.has(r.id) ? { ...r, apply_count: r.apply_count + 1 } : r))
+    }
+
+    return lines
+  }
+
+  async saveFeedback(input: { signal: string; correction: string; context?: Feedback['context'] }): Promise<Feedback> {
+    const feedbacks = this.readFeedbacks()
+    const feedback: Feedback = {
+      id: `fb_${Date.now()}`,
+      signal: input.signal.slice(0, 300),
+      correction: input.correction.slice(0, 300),
+      context: input.context ?? {},
+      created_at: new Date().toISOString(),
+      apply_count: 0,
+      promoted: false,
+    }
+    feedbacks.push(feedback)
+    this.writeFeedbacks(feedbacks)
+
+    // 같은 axis에 미승급 피드백이 5개 이상 쌓이면 distill 제안 트리거
+    const axis = feedback.context.axis
+    const pending = feedbacks.filter(f => !f.promoted && (axis ? f.context.axis === axis : true))
+    if (pending.length >= 5) {
+      // 규칙 자동 distill (호스트 LLM이 읽어서 처리할 수 있도록 메타데이터만)
+      const existing = this.readRules()
+      const alreadyDistilled = existing.some(r => r.source_ids.includes(feedback.id))
+      if (!alreadyDistilled) {
+        const rule: FeedbackRule = {
+          id: `rule_${Date.now()}`,
+          rule: `[자동 distill 필요] 피드백 ${pending.length}개 누적 — 아래 패턴 검토 후 규칙으로 정리하세요:\n` +
+            pending.slice(-5).map(f => `  · ${f.correction}`).join('\n'),
+          source_ids: pending.slice(-5).map(f => f.id),
+          apply_count: 0,
+          created_at: new Date().toISOString(),
+          promoted: false,
+        }
+        existing.push(rule)
+        this.writeRules(existing)
+      }
+    }
+
+    return feedback
+  }
+
+  async getFeedbackRules(): Promise<{ feedbacks: Feedback[]; rules: FeedbackRule[] }> {
+    return {
+      feedbacks: this.readFeedbacks().filter(f => !f.promoted),
+      rules: this.readRules().filter(r => !r.promoted),
+    }
+  }
+
+  async promoteFeedback(ruleId: string): Promise<{ rule: FeedbackRule; brandDnaUpdated: boolean }> {
+    const rules = this.readRules()
+    const rule = rules.find(r => r.id === ruleId)
+    if (!rule) throw new Error(`규칙 ID "${ruleId}"를 찾을 수 없습니다.`)
+
+    // brand_dna.writing_style.avoids에 추가
+    const currentAvoids = this.brand.writing_style?.avoids ?? []
+    const newRule = rule.rule.replace(/^\[자동 distill 필요\].*\n/, '').trim()
+    if (!currentAvoids.includes(newRule)) {
+      this.brand = {
+        ...this.brand,
+        writing_style: { ...(this.brand.writing_style ?? {}), avoids: [...currentAvoids, newRule] },
+      }
+      // config.yaml 저장
+      let current: { threads?: { access_token?: string }; brand?: BrandDna } = {}
+      try { current = (yaml.load(fs.readFileSync(this.configPath, 'utf-8')) as typeof current) ?? {} }
+      catch (err) { throw new Error(`config.yaml 읽기 실패: ${(err as Error).message}`) }
+      current.brand = this.brand
+      const tmpPath = `${this.configPath}.tmp`
+      fs.writeFileSync(tmpPath, yaml.dump(current), 'utf-8')
+      fs.renameSync(tmpPath, this.configPath)
+    }
+
+    // 규칙 promoted 마킹
+    this.writeRules(rules.map(r => r.id === ruleId ? { ...r, promoted: true } : r))
+
+    return { rule, brandDnaUpdated: true }
   }
 
   // ─── 유료 전용 (PaidOnlyError) ──────────────────────────────

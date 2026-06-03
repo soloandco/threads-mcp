@@ -2,6 +2,13 @@ import * as fs from 'fs'
 import * as path from 'path'
 import type { Post, Reply } from '../stores/store'
 
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/
+
+function safeDate(raw: string): string {
+  const d = (raw ?? '').slice(0, 10)
+  return ISO_DATE_RE.test(d) ? d : 'unknown-date'
+}
+
 export function slugify(text: string): string {
   const firstLine = (text ?? '').split('\n')[0]?.trim() ?? ''
   const cleaned = firstLine
@@ -36,7 +43,7 @@ export function generateWikiNote(
   chainPosts: Post[],  // replied_to_id 체인으로 이어진 내 포스트들 (ordered)
   postReplies: Reply[] // root_post_id === rootPost.id인 댓글들
 ): string {
-  const date = (rootPost.posted_at ?? '').slice(0, 10)
+  const date = safeDate(rootPost.posted_at ?? '')
   const today = new Date().toISOString().slice(0, 10)
   const title = (rootPost.text ?? '').split('\n')[0]?.trim().slice(0, 80) || '(제목 없음)'
   const tagsArr = rootPost.content_context ? [`"${rootPost.content_context}"`] : []
@@ -163,7 +170,7 @@ export function exportPostsToWiki(
   const indexRows: string[] = []
 
   for (const rootPost of rootPosts) {
-    const date = (rootPost.posted_at ?? '').slice(0, 10) || today
+    const date = safeDate(rootPost.posted_at ?? '') || today
     const slug = slugify(rootPost.text ?? '')
     const filename = `${date}-${slug}.md`
     const filePath = path.join(postsDir, filename)

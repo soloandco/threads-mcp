@@ -296,10 +296,15 @@ export class LocalStore implements ThreadsStore {
   // ─── 초안 ───────────────────────────────────────────────────
 
   async saveDraft(input: { title: string; content: string; id?: string }): Promise<Draft> {
-    const id = input.id ?? `draft_${Date.now()}`
+    const rawId = input.id ?? `draft_${Date.now()}`
+    // 안전한 문자만 허용 (경로 탈출 방지)
+    const id = rawId.replace(/[^a-zA-Z0-9_\-]/g, '_').slice(0, 100)
     const saved_at = new Date().toISOString()
     const draft: Draft = { id, title: input.title, content: input.content, saved_at }
-    const filePath = path.join(this.draftsDir, `${id}.md`)
+    const filePath = path.resolve(this.draftsDir, `${id}.md`)
+    if (!filePath.startsWith(path.resolve(this.draftsDir))) {
+      throw new Error('유효하지 않은 초안 ID입니다.')
+    }
     const frontmatter = yaml.dump({ title: input.title, id, saved_at })
     const body = `---\n${frontmatter}---\n\n${input.content}`
     fs.writeFileSync(filePath, body, 'utf-8')

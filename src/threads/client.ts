@@ -64,13 +64,14 @@ export class ThreadsApiClient {
 
   async get<T>(path: string, params: Record<string, string> = {}): Promise<T> {
     const url = new URL(`${this.baseUrl}${path}`)
-    url.searchParams.set('access_token', this.accessToken)
     for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v)
 
-    const res = await fetch(url.toString())
+    const res = await fetch(url.toString(), {
+      headers: { Authorization: `Bearer ${this.accessToken}` },
+      redirect: 'error',
+    })
     if (!res.ok) {
-      const body = await res.text()
-      throw new Error(`Threads API ${res.status}: ${body}`)
+      throw new Error(`Threads API error: ${res.status}`)
     }
     return res.json() as Promise<T>
   }

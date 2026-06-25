@@ -100,27 +100,36 @@ describe('generateWikiNote', () => {
     expect(note).not.toContain('## 이어진 글')
   })
 
-  it('댓글이 있으면 ## 댓글 원본에 렌더한다', () => {
-    const reply = makeReply({ username: 'fan1', text: '멋진 글이에요' })
+  it('댓글이 있으면 ## 댓글에 블록쿼트 형식으로 렌더한다', () => {
+    const reply = makeReply({ username: 'fan1', text: '멋진 글이에요', permalink: 'https://www.threads.com/@fan1/post/abc' })
     const note = generateWikiNote(makePost(), [], [reply])
-    expect(note).toContain('## 댓글 원본')
-    expect(note).toContain('@fan1: 멋진 글이에요')
+    expect(note).toContain('## 댓글')
+    expect(note).toContain('**[@fan1](https://www.threads.com/@fan1/post/abc)**')
+    expect(note).toContain('> 멋진 글이에요')
+  })
+
+  it('permalink 없으면 링크 없는 굵은 글씨로 렌더한다', () => {
+    const reply = makeReply({ username: 'fan1', text: '댓글' })
+    const note = generateWikiNote(makePost(), [], [reply])
+    expect(note).toContain('**@fan1**')
+    expect(note).toContain('> 댓글')
   })
 
   it('HIDDEN 댓글은 제외한다', () => {
     const visible = makeReply({ id: 'r1', username: 'fan1', text: '보임' })
     const hidden = makeReply({ id: 'r2', username: 'troll', text: '숨김', hide_status: 'HIDDEN' })
     const note = generateWikiNote(makePost(), [], [visible, hidden])
-    expect(note).toContain('@fan1: 보임')
-    expect(note).not.toContain('@troll: 숨김')
+    expect(note).toContain('**@fan1**')
+    expect(note).not.toContain('@troll')
   })
 
-  it('대댓글은 들여쓰기로 렌더한다', () => {
+  it('대댓글은 2칸 들여쓴 블록쿼트로 렌더한다', () => {
     const parent = makeReply({ id: 'r1', username: 'user1', text: '부모 댓글' })
     const child = makeReply({ id: 'r2', username: 'user2', text: '대댓글', replied_to_id: 'r1' })
     const note = generateWikiNote(makePost(), [], [parent, child])
-    expect(note).toContain('@user1: 부모 댓글')
-    expect(note).toContain('  @user2: 대댓글')
+    expect(note).toContain('> **@user1**')
+    expect(note).toContain('  > **@user2**')
+    expect(note).toContain('  > 대댓글')
   })
 
   it('댓글 없으면 수집된 댓글 없음 표시', () => {

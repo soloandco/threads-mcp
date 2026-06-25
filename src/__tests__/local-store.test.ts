@@ -173,8 +173,9 @@ describe('LocalStore.exportToWiki', () => {
     const wikiDir = path.join(tmpDir, 'wiki', 'posts')
     const files = fs.readdirSync(wikiDir).filter(f => f.endsWith('.md') && f !== '_index.md')
     const content = fs.readFileSync(path.join(wikiDir, files[0]!), 'utf-8')
-    expect(content).toContain('## 댓글 원본')
-    expect(content).toContain('@fan1: 좋아요!')
+    expect(content).toContain('## 댓글')
+    expect(content).toContain('**@fan1**')
+    expect(content).toContain('> 좋아요!')
   })
 
   it('(미작성) 플레이스홀더가 유지된다', async () => {

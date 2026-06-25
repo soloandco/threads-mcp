@@ -27,6 +27,10 @@ Step 4 (선택): Threads 데이터 연동
 
 ### Step 1: Obsidian + Clipper 설치
 
+> [!IMPORTANT]
+> **Obsidian 설치는 필수입니다.** 이 MCP는 Obsidian vault를 데이터 저장소로 사용합니다.  
+> 아직 설치하지 않았다면 아래 1-1을 먼저 완료하세요.
+
 #### 1-1. Obsidian 설치
 
 [obsidian.md/ko](https://obsidian.md/ko/)에서 설치합니다.
@@ -42,7 +46,9 @@ Step 4 (선택): Threads 데이터 연동
 
 #### 1-2. Obsidian Clipper 설치 (선택)
 
-브라우저에서 웹 페이지를 vault로 바로 저장하려면:
+> [!TIP]
+> 브라우저에서 웹 페이지를 vault로 바로 저장하고 싶다면 Clipper를 설치하세요.  
+> wiki 기능만 쓴다면 건너뛰어도 됩니다.
 
 - Chrome / Arc: [Chrome Web Store](https://chromewebstore.google.com/detail/obsidian-web-clipper/cnjifjpddelmedmihgijeibhnjfabmlf) → **Obsidian Web Clipper** 설치
 - Firefox: [Firefox Add-ons](https://addons.mozilla.org/ko/firefox/addon/web-clipper-obsidian/) → **Obsidian Web Clipper** 설치
@@ -295,6 +301,10 @@ Step 4 (optional): Connect Threads data
 
 ### Step 1: Install Obsidian + Clipper
 
+> [!IMPORTANT]
+> **Obsidian is required.** This MCP uses an Obsidian vault as its data store.  
+> If you haven't installed it yet, complete step 1-1 before continuing.
+
 #### 1-1. Install Obsidian
 
 Download from [obsidian.md](https://obsidian.md/) and create a new vault. Example locations:
@@ -308,7 +318,9 @@ Download from [obsidian.md](https://obsidian.md/) and create a new vault. Exampl
 
 #### 1-2. Install Obsidian Clipper (optional)
 
-To save web pages directly to your vault from the browser:
+> [!TIP]
+> Install Clipper if you want to save web pages directly to your vault from the browser.  
+> Skip this step if you only need the wiki features.
 
 - Chrome / Arc: [Chrome Web Store](https://chromewebstore.google.com/detail/obsidian-web-clipper/cnjifjpddelmedmihgijeibhnjfabmlf) → **Obsidian Web Clipper**
 - Firefox: [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/web-clipper-obsidian/) → **Obsidian Web Clipper**

@@ -225,6 +225,12 @@ created: YYYY-MM-DD
 [[topics/{topic}]] · [[insights/...]]
 ```
 
+**4단계: 발표/강의 용도면 슬라이드 렌더링 (선택)**
+
+사용자가 강의·발표자료를 HTML로 원하면, 합성 문서를 콘텐츠 소스로 삼아 **`lecture-slide-deck` 스킬**을 호출한다. 합성(이 스킬)은 내용을, lecture-slide-deck은 디자인을 담당한다.
+- 산출물: `wiki/insights/YYYY-MM-DD-{slug}-슬라이드.html`
+- 수치·인용은 이 합성 문서의 실제 값만 슬라이드에 옮긴다 (재생성 금지)
+
 ---
 
 ## 모드 4: skill-suggest — 패턴 감지 → 스킬 제안

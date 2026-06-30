@@ -288,7 +288,7 @@ cp .claude/skills/threads/references/exemplar-and-verify.md.example \
 ### 개발
 
 ```bash
-npm test          # vitest (39개 테스트)
+npm test          # vitest (40개 테스트)
 npm run build     # tsc 빌드
 npm run dev       # tsx로 서버 직접 실행
 ```
@@ -575,7 +575,7 @@ The advanced analytics below require a hosted backend and are **[threddi.com](ht
 ### Development
 
 ```bash
-npm test          # vitest (39 tests)
+npm test          # vitest (40 tests)
 npm run build     # tsc build
 npm run dev       # run server directly with tsx
 ```

@@ -2,11 +2,39 @@
   "name": "threads-mcp",
   "version": "0.1.0",
   "description": "Threads posts collector and Obsidian wiki exporter MCP server",
+  "license": "AGPL-3.0-only",
+  "author": "soloandco",
+  "homepage": "https://github.com/soloandco/threads-mcp#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/soloandco/threads-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/soloandco/threads-mcp/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "threads",
+    "obsidian",
+    "llm-wiki",
+    "claude"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
   "bin": { "threads-mcp": "dist/server.js" },
+  "files": [
+    "dist",
+    "config.yaml.example",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "dev": "tsx src/server.ts",
     "build": "tsc",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.26.0",

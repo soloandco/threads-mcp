@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 // threads-mcp/src/server.ts
 import { Server } from '@modelcontextprotocol/sdk/server/index.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
@@ -8,9 +9,8 @@ import { LocalStore } from './stores/local-store'
 import type { ThreadsStore } from './stores/store'
 import { TOOL_LIST, dispatch } from './tools'
 
-// neomeo 루트의 .env.local 로드 (neomeo 안에서 실행 시)
-const envPath = path.resolve(process.cwd(), '.env.local')
-dotenv.config({ path: envPath })
+// 실행 디렉터리의 .env.local 이 있으면 로드 (없으면 무시 — env / config.yaml 로 동작)
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') })
 
 const configPath = process.env.THREADS_CONFIG
   ?? path.resolve(process.cwd(), 'threads/config.yaml')

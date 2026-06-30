@@ -121,10 +121,10 @@ export function generateWikiNote(
   )
 
   if (replyBlocks.length > 0) {
-    sections.push('', '## 댓글', '')
+    sections.push('', '## 댓글 원본', '')
     sections.push(...replyBlocks)
   } else {
-    sections.push('', '## 댓글', '', '(수집된 댓글 없음)')
+    sections.push('', '## 댓글 원본', '', '(수집된 댓글 없음)')
   }
 
   sections.push(

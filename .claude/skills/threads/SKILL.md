@@ -197,7 +197,7 @@ brand_dna 연동: `default_style`·`writing_style.avoids`(`get_draft_context`의
 
 ## 동기화
 
-이 스킬의 정본은 `threads-mcp/.claude/skills/threads/`다. 편집하면 PostToolUse 훅이 git 커밋·푸시와 `~/.claude/skills/threads/` 복사를 처리한다.
+이 스킬의 정본은 `threads-mcp/.claude/skills/threads/`다. `~/.claude/skills/threads`는 이 폴더를 가리키는 **디렉터리 정션**이라 편집이 모든 프로젝트에 즉시 반영된다(복사 단계 없음). PostToolUse 훅은 git 커밋·푸시만 처리한다.
 동기화가 안 된 것 같으면 `~/.claude/scripts/threads-mcp-sync.log`를 본다 — 훅이 안 돌았는지, 돌았는데 실패했는지가 기록된다.
 훅 페이로드에 한글이 들어오므로 스크립트는 stdin을 UTF-8로 직접 디코딩한다. `[Console]::In`을 쓰면 PS 5.1이 코드페이지 949로 읽어 JSON이 깨진다.
 

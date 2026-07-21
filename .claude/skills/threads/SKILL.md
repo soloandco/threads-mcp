@@ -1,6 +1,6 @@
 ---
 name: threads
-description: Use when the user wants to write a Threads post. Runs a Socratic coaching session based on Threddi MCP data before drafting. Triggers on "스레드 글", "threads 글 쓰기", "오늘 글".
+description: Use when the user wants to write a Threads post. Runs a Socratic coaching session based on Threddi MCP data before drafting. In a git repo it reads recent commits as post material (dev work as daily record). Triggers on "스레드 글", "threads 글 쓰기", "오늘 글", "개발한 걸로 글", "커밋으로 글".
 origin: custom
 ---
 

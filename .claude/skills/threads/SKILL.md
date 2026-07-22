@@ -205,6 +205,8 @@ git log --oneline --no-merges --since="3 days ago" 2>/dev/null | head -15
 
 **5) held-out 검증** — `exemplar-and-verify.md` B절대로, hold-out 글과 대조. 2개 이상 fail → 1회 수정(최대 2회).
 
+**6) 덜어내기 게이트** — `subtraction-gate.md` 5개 항목으로 통과. 제작자 논리·중복 목록·설정 없는 마지막 줄·어미 3연속·미검증 단정을 걷어낸다. **통과 후 남은 「뺄 수 있는 문장 후보」와 「확인 필요한 사실」을 초안과 함께 낸다** (작성자가 묻기 전에).
+
 brand_dna 연동: `default_style`·`writing_style.avoids`(`get_draft_context`의 "[글쓰기 금기]")는 anti-slop-ko.md와 함께 적용.
 
 ---

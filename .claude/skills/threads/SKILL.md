@@ -189,10 +189,11 @@ git log --oneline --no-merges --since="3 days ago" 2>/dev/null | head -15
 
 > 설계 근거: 문체를 "요약 규칙"으로 옮기면 요약 톤(AI 톤)이 나온다. **측정된 골격 + 실제 예문 모방 + anti-slop 게이트**로 옮긴다. 오픈소스 검증: `stop-slop`(14.0k★)·`write-like-me`(13★)·Patel et al. 2023(정량 프로필+예문 > 주관 묘사).
 
-레퍼런스 3종 (`references/`):
+레퍼런스 4종 (`references/`):
 - `voice-profile.md` — 측정된 문체 골격 (Layer B 골격)
 - `exemplar-and-verify.md` — 예문 선별법 + held-out 검증
 - `anti-slop-ko.md` — 한국어 anti-slop 가드 + 5차원 스코어 게이트 (Layer A, 항상 ON)
+- `subtraction-gate.md` — 무엇을 넣지 말지 (Layer C, 항상 ON)
 
 **1) 프로필 로드** — `voice-profile.md`로 어미·길이·훅·구조·리듬 골격 확인.
 

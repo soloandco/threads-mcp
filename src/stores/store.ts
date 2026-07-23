@@ -11,6 +11,7 @@ export interface Post {
   content_context?: string // 유료 전용 (LocalStore에서는 항상 undefined)
   replied_to_id?: string   // 부모 포스트 id (이어쓰기 체인 복원용)
   has_replies?: boolean
+  permalink?: string       // Threads 원문 URL
 }
 
 export interface Reply {

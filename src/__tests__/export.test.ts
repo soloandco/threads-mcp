@@ -76,6 +76,22 @@ describe('generateWikiNote', () => {
     expect(note).toContain('threads_id: "fallback-id"')
   })
 
+  it('permalink가 있으면 url 프론트매터와 원문 링크를 포함한다', () => {
+    const note = generateWikiNote(
+      makePost({ permalink: 'https://www.threads.com/@soloandco.club/post/DU9lIrgEdsC' }),
+      [],
+      []
+    )
+    expect(note).toContain('url: "https://www.threads.com/@soloandco.club/post/DU9lIrgEdsC"')
+    expect(note).toContain('🔗 [Threads 원문 보기](https://www.threads.com/@soloandco.club/post/DU9lIrgEdsC)')
+  })
+
+  it('permalink가 없으면 url은 빈 값이고 원문 링크 줄은 없다', () => {
+    const note = generateWikiNote(makePost(), [], [])
+    expect(note).toContain('url: ""')
+    expect(note).not.toContain('🔗 [Threads 원문 보기]')
+  })
+
   it('(미작성) 플레이스홀더를 포함한다', () => {
     const note = generateWikiNote(makePost(), [], [])
     expect(note).toContain('## 댓글에서 배운 것')

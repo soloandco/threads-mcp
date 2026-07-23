@@ -12,6 +12,7 @@ export interface ThreadsApiPost {
   is_reply?: boolean
   replied_to?: { id: string }
   has_replies?: boolean
+  permalink?: string
 }
 
 export interface ThreadsApiReply {
@@ -40,6 +41,7 @@ export function normalizePost(raw: ThreadsApiPost): Post {
     is_reply: raw.is_reply ?? false,
     replied_to_id: raw.replied_to?.id,
     has_replies: raw.has_replies ?? false,
+    permalink: raw.permalink,
   }
 }
 
@@ -81,7 +83,7 @@ export class ThreadsApiClient {
   }
 
   async *paginatePosts(userId: string): AsyncGenerator<ThreadsApiPost[]> {
-    const FIELDS = 'id,text,timestamp,like_count,replies_count,repost_count,views,is_reply,replied_to,has_replies'
+    const FIELDS = 'id,text,timestamp,like_count,replies_count,repost_count,views,is_reply,replied_to,has_replies,permalink'
     let cursor: string | undefined
 
     do {

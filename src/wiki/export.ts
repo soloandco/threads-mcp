@@ -69,6 +69,7 @@ export function generateWikiNote(
   const today = todayKst()
   const title = (rootPost.text ?? '').split('\n')[0]?.trim().slice(0, 80) || '(제목 없음)'
   const tagsArr = rootPost.content_context ? [`"${rootPost.content_context}"`] : []
+  const url = rootPost.permalink ?? ''
 
   const visibleReplies = postReplies.filter(r => r.hide_status !== 'HIDDEN')
   // 최상위 댓글: replied_to_id 없거나 루트 포스트 자체가 replied_to
@@ -88,6 +89,7 @@ export function generateWikiNote(
     'status: published',
     `date: ${date}`,
     `threads_id: "${rootPost.threads_post_id ?? rootPost.id}"`,
+    `url: "${url}"`,
     `likes: ${rootPost.like_count ?? 0}`,
     `replies: ${rootPost.reply_count ?? 0}`,
     `reposts: ${rootPost.repost_count ?? 0}`,
@@ -101,6 +103,7 @@ export function generateWikiNote(
     '',
     `# ${title}`,
     '',
+    ...(url ? [`🔗 [Threads 원문 보기](${url})`, ''] : []),
     '## 본문',
     '',
     rootPost.text ?? '',

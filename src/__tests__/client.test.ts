@@ -50,6 +50,15 @@ describe('normalizePost', () => {
     expect(post.replied_to_id).toBeUndefined()
     expect(post.has_replies).toBe(false)
   })
+
+  it('permalink를 매핑한다', () => {
+    const post = normalizePost({
+      id: 'z',
+      timestamp: '2026-01-01T00:00:00Z',
+      permalink: 'https://www.threads.com/@soloandco.club/post/DU9lIrgEdsC',
+    })
+    expect(post.permalink).toBe('https://www.threads.com/@soloandco.club/post/DU9lIrgEdsC')
+  })
 })
 
 describe('normalizeReply', () => {

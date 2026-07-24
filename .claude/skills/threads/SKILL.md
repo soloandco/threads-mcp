@@ -1,7 +1,6 @@
 ---
 name: threads
-description: Use when the user wants to write a Threads post. Runs a Socratic coaching session based on Threddi MCP data before drafting. In a git repo it reads recent commits as post material (dev work as daily record). Triggers on "스레드 글", "threads 글 쓰기", "오늘 글", "개발한 걸로 글", "커밋으로 글".
-origin: custom
+description: Use when the user wants to write or revise a Threads post. Loads brand DNA, successful-post context, topic frequency, and engagement data exclusively from the Supabase-backed threddi MCP before drafting. In a git repo it reads recent commits as post material. Triggers on "스레드 글", "threads 글 쓰기", "오늘 글", "포스트 작성", "개발한 걸로 글", "커밋으로 글".
 ---
 
 # Threads 브랜딩 코치
@@ -28,20 +27,37 @@ Step 7: 초안 스파링 → 확인 후 완료
 스킬 시작 시 **아무것도 하기 전에** 병렬로 호출:
 
 ```
-- get_brand_dna
-- get_content_mix (days: 30)
-- get_draft_context (days: 90, limit: 20)
-- get_topic_frequency (days: 30, top: 15)
+- mcp__threddi__get_brand_dna
+- mcp__threddi__get_draft_context (days: 90, limit: 20)
+- mcp__threddi__get_topic_frequency (days: 30, top: 15)
+- mcp__threddi__get_engagement_stats (days: 30)
 ```
 
 로드한 데이터를 내부 컨텍스트로 보관. 사용자에게는 표시하지 않는다.
+
+### MCP 정본 게이트
+
+- 브랜드 DNA와 기존 답변의 정본은 **Supabase 기반 `threddi` MCP**다.
+- `C:\Users\first\project\threads-mcp`의 로컬 YAML/LocalStore 서버는 이 단계에서 호출하지 않는다.
+- 도구 namespace가 `mcp__threddi__`가 아니거나 응답에 `LocalStore`가 보이면 잘못된 MCP다. 즉시 중단하고 연결 오류를 보고한다.
+- `mcp__threddi__get_brand_dna` 또는 `mcp__threddi__get_draft_context`가 없거나 호출에 실패하면 로컬 데이터로 대체하지 않는다. 사용자에게 Codex의 `threddi` 연결 상태를 확인하도록 안내한다.
+- 연결 실패·서버 오선택·`프로필 없음`을 “브랜드 정보 미설정”으로 해석하지 않는다. 따라서 온보딩 질문도 시작하지 않는다.
 
 ---
 
 ## Step 2: Brand DNA 상태 확인
 
-`get_brand_dna` 결과에서 `mission`, `strengths`, `vision_1yr` 중 **2개 이상 미설정**이면 → **온보딩 모드**.
-모두 채워져 있으면 → **코칭 모드** (Step 3으로).
+`mcp__threddi__get_brand_dna`의 실제 응답 섹션을 검사한다.
+
+- `[1. 비전]`
+- `[2. 타겟 고객]`
+- `[3. 내 이야기]`
+- `[5. 글쓰기 스타일]`
+
+위 네 섹션 중 **2개 이상이 비어 있거나 `미설정`**이면 → **온보딩 모드**.
+그 외에는 → **코칭 모드** (Step 3으로).
+
+`[6. 제품 목록]`은 선택 항목이다. 제품이 미설정이어도 온보딩 모드로 전환하지 않는다.
 
 ### 온보딩 모드
 
@@ -60,14 +76,14 @@ Step 7: 초안 스파링 → 확인 후 완료
 **Q4 — 3년 비전**
 > "그 사람은 3년 뒤에 뭘 하고 있나요?"
 
-모든 답변 수집 후 `update_brand_dna` 호출해서 저장. 이후 Step 3으로.
+모든 답변을 수집해 현재 글쓰기 컨텍스트에 반영한다. `threddi` MCP에는 `update_brand_dna` 도구가 없으므로 로컬 YAML에 저장하지 않는다. 사용자가 영구 저장을 원하면 답변을 구조화해 Threddi 설정 화면에 입력하도록 안내한다. 이후 Step 3으로.
 
 ---
 
 ## Step 3: 소재 파악
 
 **문체 확인**: 아래 우선순위로 결정. **절대 사용자에게 문체를 묻지 않는다.**
-1. `brand_dna.default_style` (MCP에서 로드 성공 시)
+1. `mcp__threddi__get_brand_dna`의 `[5. 글쓰기 스타일]` (톤·패턴·훅·금기)
 2. MCP 미연결 또는 값 없음 → **폴백 기본값: 선언체 (`~다 / ~였다`)** 자동 적용
 
 **소재 확인**: 현재 대화에서 오늘 한 작업·경험·생각을 소재로 파악.
@@ -107,7 +123,7 @@ git log --oneline --no-merges --since="3 days ago" 2>/dev/null | head -15
 
 | 신호 | 데이터 | 질문 방향 |
 |------|--------|-----------|
-| 믹스 불균형 | `get_content_mix` | "30일간 권위 글이 60%인데, 이번은 진정성 방향 어때요?" |
+| 최근 반응 변화 | `get_engagement_stats` | "최근 30일 평균 반응과 비교했을 때, 이번 글에서 반응을 만들 구체적인 지점이 있나요?" |
 | 성공 패턴 | `get_draft_context` 패턴 | "잘 됐던 글은 전부 '수치+반전' 구조인데, 이번 소재에서 수치가 있나요?" |
 | 주제 반복 | `get_topic_frequency` | "최근 '클로드'가 8회 등장. 다른 각도로 접근할 수 있을까요?" |
 | 전환 정체 | `get_conversion_funnel` | "팔로우는 느는데 DM이 없네요. 오퍼 힌트를 넣어볼까요?" |
@@ -160,6 +176,7 @@ git log --oneline --no-merges --since="3 days ago" 2>/dev/null | head -15
 - 줄바꿈 자주 사용
 - 이모지 최대 1~2개, 없어도 됨
 - 링크 유도 없음 (플랫폼 안에서 완결)
+- **최종 초안은 언어 태그 없는 코드블록(```)으로 출력한다** — 붙여넣기 시 서식이 그대로 보존되게. 특히 `1.` `2.` 같은 번호 줄은 채팅이 마크다운 자동 목록으로 렌더링해 복사하면 앞 숫자가 빠진다. 코드펜스로 감싸면 글자 그대로 복사된다. 초안 앞뒤의 코칭·약점·확인 사항 등 메타 텍스트는 코드블록 밖 일반 텍스트로 둔다. (다른 곳에 붙여도 `1.`이 목록으로 안 바뀌길 원하면 `1)`·`①②③`로 바꿔 제안)
 
 ### 구조 — 성공담/실패담 2형 (포스트 2~3개)
 
@@ -207,7 +224,7 @@ git log --oneline --no-merges --since="3 days ago" 2>/dev/null | head -15
 
 **6) 덜어내기 게이트** — `subtraction-gate.md` 5개 항목으로 통과. 제작자 논리·중복 목록·설정 없는 마지막 줄·어미 3연속·미검증 단정을 걷어낸다. **통과 후 남은 「뺄 수 있는 문장 후보」와 「확인 필요한 사실」을 초안과 함께 낸다** (작성자가 묻기 전에).
 
-brand_dna 연동: `default_style`·`writing_style.avoids`(`get_draft_context`의 "[글쓰기 금기]")는 anti-slop-ko.md와 함께 적용.
+brand_dna 연동: `get_brand_dna`의 `[5. 글쓰기 스타일]`과 `get_draft_context`의 `[글쓰기 금기]`는 anti-slop-ko.md와 함께 적용.
 
 ---
 

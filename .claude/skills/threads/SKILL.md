@@ -1,6 +1,6 @@
 ---
 name: threads
-description: Use when the user wants to write or revise a Threads post. Loads brand DNA, successful-post context, topic frequency, and engagement data exclusively from the Supabase-backed threddi MCP before drafting. In a git repo it reads recent commits as post material. Triggers on "스레드 글", "threads 글 쓰기", "오늘 글", "포스트 작성", "개발한 걸로 글", "커밋으로 글".
+description: Use when the user wants to write or revise a Threads post. Loads brand DNA, successful-post context, topic frequency, and engagement data exclusively from the Supabase-backed threddi MCP before drafting. In a git repo it reads recent commits as post material. Triggers on "스레드 글", "threads 글 쓰기", "오늘 글", "포스트 작성", "개발한 걸로 글", "커밋으로 글", "정보 공유 글", "해외 사례로 글", "정리 글".
 ---
 
 # Threads 브랜딩 코치

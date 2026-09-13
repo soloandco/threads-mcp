@@ -200,34 +200,6 @@ export_to_wiki      # Obsidian 노트로 변환
 
 MCP가 데이터 레이어라면, 스킬은 그 위에서 동작하는 워크플로 레시피입니다.
 
-#### threads — 글쓰기 코칭
-
-`.claude/skills/threads/` — 소크라테스식 7단계 글쓰기 워크플로.  
-트리거: `"스레드 글 써줘"`, `"오늘 글"`
-
-템플릿은 예시 파일(`*.example`)입니다. 본인 스타일로 채워서 쓰세요. `.example`이 없는 같은 이름의 실본(`SKILL.md`, `voice-profile.md` 등)은 제작자가 실제로 쓰는 설정을 그대로 공개한 도그푸딩 샘플이니, 채우는 방법이 궁금할 때 참고하면 됩니다:
-
-```
-.claude/skills/threads/
-├── SKILL.md.example                        ← 7단계 구조 (여기서 시작)
-└── references/
-    ├── anti-slop-ko.md                     ← 한국어 anti-slop 가드 (그대로 사용 가능)
-    ├── voice-profile.md.example            ← 본인 문체 수치 입력 템플릿
-    └── exemplar-and-verify.md.example      ← 예문 선별·검증 절차
-```
-
-시작 방법:
-
-```bash
-cp .claude/skills/threads/SKILL.md.example .claude/skills/threads/SKILL.md
-cp .claude/skills/threads/references/voice-profile.md.example \
-   .claude/skills/threads/references/voice-profile.md
-cp .claude/skills/threads/references/exemplar-and-verify.md.example \
-   .claude/skills/threads/references/exemplar-and-verify.md
-```
-
-이후 각 파일의 `커스터마이징 포인트` 주석을 본인 전략으로 채웁니다.
-
 #### threads-wiki-synthesis — wiki 합성·분석
 
 `.claude/skills/threads-wiki-synthesis/` — 포스트·댓글 데이터를 분석해 인사이트 문서를 생성합니다.  
@@ -488,32 +460,6 @@ export_to_wiki    # convert to Obsidian notes
 ### Claude Code Skills (included)
 
 The MCP is the data layer; skills are workflow recipes that run on top of it.
-
-#### threads — Writing Coaching
-
-`.claude/skills/threads/` — Socratic 7-step writing workflow.  
-Triggers on: `"write a threads post"`, `"오늘 글"`
-
-Skills are provided as example files (`*.example`) — fill them in with your own style:
-
-```
-.claude/skills/threads/
-├── SKILL.md.example                        ← 7-step structure (start here)
-└── references/
-    ├── anti-slop-ko.md                     ← Korean anti-slop guard (usable as-is)
-    ├── voice-profile.md.example            ← template for your voice profile metrics
-    └── exemplar-and-verify.md.example      ← exemplar selection & verification
-```
-
-```bash
-cp .claude/skills/threads/SKILL.md.example .claude/skills/threads/SKILL.md
-cp .claude/skills/threads/references/voice-profile.md.example \
-   .claude/skills/threads/references/voice-profile.md
-cp .claude/skills/threads/references/exemplar-and-verify.md.example \
-   .claude/skills/threads/references/exemplar-and-verify.md
-```
-
-Then fill in the `커스터마이징 포인트` comments in each file.
 
 #### threads-wiki-synthesis — Wiki Analysis
 
